@@ -40,6 +40,31 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		265117632DBA298B007EB9DE /* Model */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Model;
+			sourceTree = "<group>";
+		};
+		265117642DBA2992007EB9DE /* Networking */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		265117692DBA29C4007EB9DE /* CoreData */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CoreData;
+			sourceTree = "<group>";
+		};
+		265117712DBA2A0D007EB9DE /* ViewModel */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		265117732DBA2A1F007EB9DE /* Views */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Views;
+			sourceTree = "<group>";
+		};
 		26C0C6582DBA2492004856E1 /* GithubUserApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -88,6 +113,11 @@
 		26C0C64D2DBA2491004856E1 = {
 			isa = PBXGroup;
 			children = (
+				265117732DBA2A1F007EB9DE /* Views */,
+				265117712DBA2A0D007EB9DE /* ViewModel */,
+				265117692DBA29C4007EB9DE /* CoreData */,
+				265117642DBA2992007EB9DE /* Networking */,
+				265117632DBA298B007EB9DE /* Model */,
 				26C0C6582DBA2492004856E1 /* GithubUserApp */,
 				26C0C66F2DBA2493004856E1 /* GithubUserAppTests */,
 				26C0C6792DBA2494004856E1 /* GithubUserAppUITests */,
@@ -121,6 +151,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				265117632DBA298B007EB9DE /* Model */,
+				265117642DBA2992007EB9DE /* Networking */,
+				265117692DBA29C4007EB9DE /* CoreData */,
+				265117712DBA2A0D007EB9DE /* ViewModel */,
+				265117732DBA2A1F007EB9DE /* Views */,
 				26C0C6582DBA2492004856E1 /* GithubUserApp */,
 			);
 			name = GithubUserApp;
