@@ -16,11 +16,15 @@ class CoreDataStack {
 
     lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "GitHubUsersApp")
-        container.loadPersistentStores { _, error in
+        container.loadPersistentStores { storeDescription, error in
             if let error = error {
+                print("Failed to load CoreData stack: \(error)")
+                print("Store Description: \(storeDescription)")
                 fatalError("Failed to load CoreData stack: \(error)")
             }
         }
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         return container
     }()
 
@@ -38,4 +42,6 @@ class CoreDataStack {
             }
         }
     }
+    
+    
 }

@@ -55,17 +55,27 @@ class UserListViewModel {
     }
 
     private func loadCachedUsers() {
-        users = CachedUser.fetchAll(in: coreDataStack.context)
-        if !users.isEmpty {
-            lastId = users.last?.id ?? 0
-            onUsersUpdated?()
+        do {
+            users = CachedUser.fetchAll(in: coreDataStack.context)
+            if !users.isEmpty {
+                lastId = users.last?.id ?? 0
+                onUsersUpdated?()
+            }
+        } catch {
+            print("Failed to load cached users: \(error)")
+            onError?("Failed to load cached users")
         }
         fetchUsers() // Fetch fresh data in background
     }
 
     private func cacheUsers(_ users: [GitHubUser]) {
         let context = coreDataStack.context
-        users.forEach { CachedUser.create(from: $0, in: context) }
-        coreDataStack.saveContext()
+        do {
+            users.forEach { CachedUser.create(from: $0, in: context) }
+            try context.save()
+        } catch {
+            print("Failed to cache users: \(error)")
+            onError?("Failed to save users to cache")
+        }
     }
 }
