@@ -10,19 +10,26 @@ import UIKit
 
 /// Displays a paginated list of GitHub users
 class UserListViewController: UIViewController {
-    private let viewModel: UserListViewModel
+    private var viewModel: UserListViewModel!
     private let tableView = UITableView()
     private let activityIndicator = UIActivityIndicatorView(style: .large)
 
-    init(viewModel: UserListViewModel = UserListViewModel()) {
+    // MARK: - Initialization
+    
+    /// Initialize with a custom view model (for programmatic creation)
+    init(viewModel: UserListViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
-
+    
+    /// Initialize from storyboard
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        super.init(coder: coder)
+        self.viewModel = UserListViewModel() // Default view model for storyboard
     }
 
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -30,6 +37,8 @@ class UserListViewController: UIViewController {
         viewModel.fetchUsers()
     }
 
+    // MARK: - UI Setup
+    
     private func setupUI() {
         title = "GitHub Users"
         view.backgroundColor = .white
@@ -71,6 +80,8 @@ class UserListViewController: UIViewController {
         }
     }
 }
+
+// MARK: - UITableViewDataSource & UITableViewDelegate
 
 extension UserListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
