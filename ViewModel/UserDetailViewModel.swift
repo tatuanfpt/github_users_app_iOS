@@ -11,20 +11,32 @@ import Foundation
 /// ViewModel for managing user detail
 class UserDetailViewModel {
     private let service: GitHubServiceProtocol
+    private let repository: UserRepositoryProtocol
     private var userDetail: GitHubUserDetail?
 
     var onUserDetailUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
 
-    init(service: GitHubServiceProtocol = GitHubService()) {
+    init(service: GitHubServiceProtocol = GitHubService(),
+         repository: UserRepositoryProtocol = UserRepository(coreDataStack: CoreDataStack.shared)) {
         self.service = service
+        self.repository = repository
     }
 
     func fetchUserDetail(login: String) {
+        // First try to load from cache
+        if let cachedDetail = repository.fetchUserDetail(login: login) {
+            self.userDetail = cachedDetail
+            self.onUserDetailUpdated?()
+            return
+        }
+
+        // If not in cache, fetch from network
         service.fetchUserDetail(login: login) { [weak self] result in
             switch result {
             case .success(let detail):
                 self?.userDetail = detail
+                self?.repository.saveUserDetail(detail)
                 self?.onUserDetailUpdated?()
             case .failure(let error):
                 self?.onError?(error.localizedDescription)

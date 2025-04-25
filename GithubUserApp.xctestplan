@@ -19,13 +19,7 @@
     {
       "parallelizable" : false,
       "skippedTests" : [
-        "UserListViewModelTests\/testCoreDataSaveError()",
-        "UserListViewModelTests\/testDuplicateUserHandling()",
-        "UserListViewModelTests\/testEmptySearchResults()",
-        "UserListViewModelTests\/testFetchUsers()",
-        "UserListViewModelTests\/testLoadMoreUsers()",
-        "UserListViewModelTests\/testPerformanceWithLargeDataset()",
-        "UserListViewModelTests\/testSearchUsers()"
+        "UserListViewModelTests\/testCoreDataSaveError()"
       ],
       "target" : {
         "containerPath" : "container:GithubUserApp.xcodeproj",

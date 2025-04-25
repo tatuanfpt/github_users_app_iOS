@@ -7,12 +7,11 @@
 
 
 import Foundation
-import CoreData
 
 /// ViewModel for managing the user list
 class UserListViewModel {
     private let service: GitHubServiceProtocol
-    private let coreDataStack: CoreDataStackProtocol
+    private let repository: UserRepositoryProtocol
     private(set) var users: [GitHubUser] = []
     private var isFetching = false
     private var lastId: Int = 0
@@ -29,9 +28,10 @@ class UserListViewModel {
     var onUsersUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
 
-    init(service: GitHubServiceProtocol = GitHubService(), coreDataStack: CoreDataStackProtocol = CoreDataStack.shared) {
+    init(service: GitHubServiceProtocol = GitHubService(),
+         repository: UserRepositoryProtocol = UserRepository(coreDataStack: CoreDataStack.shared)) {
         self.service = service
-        self.coreDataStack = coreDataStack
+        self.repository = repository
         loadCachedUsers()
     }
 
@@ -55,7 +55,7 @@ class UserListViewModel {
             case .success(let newUsers):
                 self.users.append(contentsOf: newUsers)
                 self.lastId = newUsers.last?.id ?? self.lastId
-                self.cacheUsers(newUsers)
+                self.repository.saveUsers(newUsers)
                 self.filterUsers()
                 self.onUsersUpdated?()
             case .failure(let error):
@@ -77,42 +77,12 @@ class UserListViewModel {
         onUsersUpdated?()
     }
 
-    private func loadCachedUsers() {
-        let fetchRequest: NSFetchRequest<CachedUser> = CachedUser.fetchRequest()
-        do {
-            let cachedUsers = try coreDataStack.context.fetch(fetchRequest)
-            users = cachedUsers.compactMap { cachedUser -> GitHubUser? in
-                guard let login = cachedUser.login,
-                      let avatarUrlString = cachedUser.avatarUrl,
-                      let htmlUrlString = cachedUser.htmlUrl,
-                      let avatarUrl = URL(string: avatarUrlString),
-                      let htmlUrl = URL(string: htmlUrlString) else {
-                    return nil
-                }
-                return GitHubUser(id: Int(cachedUser.id),
-                                login: login,
-                                avatarUrl: avatarUrl,
-                                htmlUrl: htmlUrl)
-            }
-            if !users.isEmpty {
-                lastId = users.last?.id ?? 0
-                filterUsers()
-            }
-            onUsersUpdated?()
-        } catch {
-            print("Failed to load cached users: \(error)")
-            onError?("Failed to load cached users")
+    func loadCachedUsers() {
+        users = repository.fetchUsers()
+        if !users.isEmpty {
+            lastId = users.last?.id ?? 0
+            filterUsers()
         }
-    }
-
-    private func cacheUsers(_ users: [GitHubUser]) {
-        let context = coreDataStack.context
-        do {
-            users.forEach { CachedUser.create(from: $0, in: context) }
-            try context.save()
-        } catch {
-            print("Failed to cache users: \(error)")
-            onError?("Failed to save users to cache")
-        }
+        onUsersUpdated?()
     }
 }
