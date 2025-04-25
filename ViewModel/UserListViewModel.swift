@@ -13,10 +13,18 @@ import CoreData
 class UserListViewModel {
     private let service: GitHubServiceProtocol
     private let coreDataStack: CoreDataStackProtocol
-    private var users: [GitHubUser] = []
+    private(set) var users: [GitHubUser] = []
     private var isFetching = false
     private var lastId: Int = 0
     private let perPage = 20
+    
+    // Search functionality
+    private(set) var filteredUsers: [GitHubUser] = []
+    var searchText: String = "" {
+        didSet {
+            filterUsers()
+        }
+    }
 
     var onUsersUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
@@ -28,11 +36,11 @@ class UserListViewModel {
     }
 
     var numberOfUsers: Int {
-        return users.count
+        return searchText.isEmpty ? users.count : filteredUsers.count
     }
 
     func user(at index: Int) -> GitHubUser {
-        return users[index]
+        return searchText.isEmpty ? users[index] : filteredUsers[index]
     }
 
     func fetchUsers() {
@@ -48,11 +56,25 @@ class UserListViewModel {
                 self.users.append(contentsOf: newUsers)
                 self.lastId = newUsers.last?.id ?? self.lastId
                 self.cacheUsers(newUsers)
+                self.filterUsers()
                 self.onUsersUpdated?()
             case .failure(let error):
                 self.onError?(error.localizedDescription)
             }
         }
+    }
+    
+    func loadMoreUsers() {
+        fetchUsers()
+    }
+    
+    private func filterUsers() {
+        if searchText.isEmpty {
+            filteredUsers = users
+        } else {
+            filteredUsers = users.filter { $0.login.lowercased().contains(searchText.lowercased()) }
+        }
+        onUsersUpdated?()
     }
 
     private func loadCachedUsers() {
@@ -74,8 +96,9 @@ class UserListViewModel {
             }
             if !users.isEmpty {
                 lastId = users.last?.id ?? 0
-                onUsersUpdated?()
+                filterUsers()
             }
+            onUsersUpdated?()
         } catch {
             print("Failed to load cached users: \(error)")
             onError?("Failed to load cached users")

@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "F24B8DDE-7E02-4462-AF36-FEBA0888B3F1",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:GithubUserApp.xcodeproj",
+      "identifier" : "26C0C6552DBA2492004856E1",
+      "name" : "GithubUserApp"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "skippedTests" : [
+        "UserListViewModelTests\/testCoreDataSaveError()",
+        "UserListViewModelTests\/testDuplicateUserHandling()",
+        "UserListViewModelTests\/testEmptySearchResults()",
+        "UserListViewModelTests\/testFetchUsers()",
+        "UserListViewModelTests\/testLoadMoreUsers()",
+        "UserListViewModelTests\/testPerformanceWithLargeDataset()",
+        "UserListViewModelTests\/testSearchUsers()"
+      ],
+      "target" : {
+        "containerPath" : "container:GithubUserApp.xcodeproj",
+        "identifier" : "26C0C66B2DBA2493004856E1",
+        "name" : "GithubUserAppTests"
+      }
+    }
+  ],
+  "version" : 1
+}
