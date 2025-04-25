@@ -41,15 +41,20 @@ class UserListViewController: UIViewController {
     
     private func setupUI() {
         title = "GitHub Users"
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor(red: 0.96, green: 0.96, blue: 0.98, alpha: 1.00) // Light gray background
 
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UserCell")
+        tableView.register(UserTableViewCell.self, forCellReuseIdentifier: UserTableViewCell.reuseIdentifier) // Register new cell
         tableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tableView)
+        tableView.separatorStyle = .none // Remove separators
+        tableView.backgroundColor = .clear // Make table view background clear
+        tableView.showsVerticalScrollIndicator = false
+        // Add some padding to the table view content itself if needed via contentInset or constraints
+        tableView.contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
 
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(tableView)
         view.addSubview(activityIndicator)
 
         NSLayoutConstraint.activate([
@@ -89,10 +94,21 @@ extension UserListViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "UserCell", for: indexPath)
+        // Dequeue the custom cell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: UserTableViewCell.reuseIdentifier, for: indexPath) as? UserTableViewCell else {
+            fatalError("Unable to dequeue UserTableViewCell")
+        }
         let user = viewModel.user(at: indexPath.row)
-        cell.textLabel?.text = user.login
+        // Configure the custom cell
+        cell.configure(with: user)
         return cell
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        // Adjust height to accommodate padding and cell content
+        // Cell height = Avatar height (60) + Vertical Padding inside container (implicit) + Container padding (8 * 2) + Inter-cell spacing (implicit via container padding)
+        // Let's estimate around 80-90 points. Needs testing.
+        return 84 // 60 (avatar) + 16 (internal padding top/bottom) + 8 (container margin top/bottom)
     }
 
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
@@ -102,9 +118,11 @@ extension UserListViewController: UITableViewDataSource, UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true) // Deselect immediately
         let user = viewModel.user(at: indexPath.row)
-        let detailVC = UserDetailViewController(login: user.login)
+        // Initialize UserDetailViewModel with its default initializer
+        let detailViewModel = UserDetailViewModel() // USE default init
+        let detailVC = UserDetailViewController(login: user.login, viewModel: detailViewModel)
         navigationController?.pushViewController(detailVC, animated: true)
-        tableView.deselectRow(at: indexPath, animated: true)
     }
 }
