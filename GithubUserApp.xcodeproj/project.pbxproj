@@ -22,14 +22,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		26412DC72DBB2276008DC71A /* Exceptions for "GithubUserAppTests" folder in "GithubUserAppTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				GithubUserApp.xctestplan,
-				GithubUserAppTests.xctestplan,
-			);
-			target = 26C0C66B2DBA2493004856E1 /* GithubUserAppTests */;
-		};
 		26C0C67E2DBA2494004856E1 /* Exceptions for "GithubUserApp" folder in "GithubUserApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -75,9 +67,6 @@
 		};
 		26C0C66F2DBA2493004856E1 /* GithubUserAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				26412DC72DBB2276008DC71A /* Exceptions for "GithubUserAppTests" folder in "GithubUserAppTests" target */,
-			);
 			path = GithubUserAppTests;
 			sourceTree = "<group>";
 		};

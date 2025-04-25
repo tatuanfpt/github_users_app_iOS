@@ -8,8 +8,17 @@
 
 import CoreData
 
+
+// MARK: - CoreDataStack Protocol
+
+protocol CoreDataStackProtocol {
+    var context: NSManagedObjectContext { get }
+    func saveContext()
+}
+
+
 /// Manages CoreData stack for persistent storage
-class CoreDataStack {
+class CoreDataStack: CoreDataStackProtocol {
     static let shared = CoreDataStack()
 
     init() {}

@@ -6,50 +6,40 @@
 //
 
 import XCTest
+import CoreData
 @testable import GithubUserApp
 
-// MARK: - Mock CoreData Stack
+// MARK: - Test CoreData Stack
 
-class MockCoreDataStack {
-    private var cachedUsers: [CachedUser] = []
-    
+class TestCoreDataStack: CoreDataStackProtocol {
+    private let container: NSPersistentContainer
     var context: NSManagedObjectContext {
-        return MockManagedObjectContext(cachedUsers: cachedUsers)
+        return container.viewContext
+    }
+    
+    init() {
+        container = NSPersistentContainer(name: "GithubUserApp")
+        
+        // Create in-memory store description
+        let description = NSPersistentStoreDescription()
+        description.type = NSInMemoryStoreType
+        container.persistentStoreDescriptions = [description]
+        
+        container.loadPersistentStores { description, error in
+            if let error = error {
+                fatalError("Failed to load test Core Data stack: \(error)")
+            }
+        }
     }
     
     func saveContext() {
-        // No-op for testing
-    }
-    
-    func addCachedUser(_ user: GitHubUser) {
-        let entity = NSEntityDescription.entity(forEntityName: "CachedUser", in: context)!
-        let cachedUser = CachedUser(entity: entity, insertInto: nil)
-        cachedUser.id = Int64(user.id)
-        cachedUser.login = user.login
-        cachedUser.avatarUrl = user.avatarUrl.absoluteString
-        cachedUser.htmlUrl = user.htmlUrl.absoluteString
-        cachedUsers.append(cachedUser)
-    }
-}
-
-class MockManagedObjectContext: NSManagedObjectContext {
-    private let cachedUsers: [CachedUser]
-    
-    init(cachedUsers: [CachedUser]) {
-        self.cachedUsers = cachedUsers
-        super.init(concurrencyType: .mainQueueConcurrencyType)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func fetch<T: NSFetchRequestResult>(_ request: NSFetchRequest<T>) throws -> [T] {
-        return cachedUsers as! [T]
-    }
-    
-    override func save() throws {
-        // No-op for testing
+        if context.hasChanges {
+            do {
+                try context.save()
+            } catch {
+                print("Error saving test context: \(error)")
+            }
+        }
     }
 }
 
@@ -61,7 +51,7 @@ class MockGitHubService: GitHubServiceProtocol {
     var fetchUsersCalled = false
     var lastPerPage: Int?
     var lastSince: Int?
-
+    
     func fetchUsers(perPage: Int, since: Int, completion: @escaping (Result<[GitHubUser], Error>) -> Void) {
         fetchUsersCalled = true
         lastPerPage = perPage
@@ -73,59 +63,119 @@ class MockGitHubService: GitHubServiceProtocol {
             completion(.success(users))
         }
     }
-
-    func fetchUserDetail(login: String, completion: @escaping (Result<GitHubUserDetail, Error>) -> Void) {}
+    
+    func fetchUserDetail(login: String, completion: @escaping (Result<GitHubUserDetail, Error>) -> Void) {
+        // Not used in these tests
+    }
 }
 
 // MARK: - Tests
 
 class UserListViewModelTests: XCTestCase {
     var viewModel: UserListViewModel!
-    var mockService: MockGitHubService!
-    var mockCoreDataStack: MockCoreDataStack!
-
+    var mockGitHubService: MockGitHubService!
+    var testCoreDataStack: TestCoreDataStack!
+    
     override func setUp() {
         super.setUp()
-        mockService = MockGitHubService()
-        mockCoreDataStack = MockCoreDataStack()
-        viewModel = UserListViewModel(service: mockService, coreDataStack: mockCoreDataStack)
+        testCoreDataStack = TestCoreDataStack()
+        mockGitHubService = MockGitHubService()
+        viewModel = UserListViewModel(service: mockGitHubService, coreDataStack: testCoreDataStack)
     }
-
+    
     override func tearDown() {
         viewModel = nil
-        mockService = nil
-        mockCoreDataStack = nil
+        mockGitHubService = nil
+        testCoreDataStack = nil
         super.tearDown()
     }
-
+    
+    // MARK: - Fetch Users Tests
+    
     func testFetchUsersSuccess() {
-        let expectation = XCTestExpectation(description: "Fetch users")
-        let mockUsers = [GitHubUser(id: 1, login: "test", avatarUrl: URL(string: "https://avatar.com")!, htmlUrl: URL(string: "https://github.com")!)]
-        mockService.mockUsers = mockUsers
-
+        // Given
+        let expectation = XCTestExpectation(description: "Fetch users success")
+        let mockUser = GitHubUser(id: 1, login: "testUser", avatarUrl: URL(string: "https://test.com/avatar.jpg")!, htmlUrl: URL(string: "https://test.com/user")!)
+        mockGitHubService.mockUsers = [mockUser]
+        
+        // When
         viewModel.onUsersUpdated = {
+            // Then
             XCTAssertEqual(self.viewModel.numberOfUsers, 1)
-            XCTAssertEqual(self.viewModel.user(at: 0).login, "test")
-            XCTAssertTrue(self.mockService.fetchUsersCalled)
-            XCTAssertEqual(self.mockService.lastPerPage, 20)
+            XCTAssertEqual(self.viewModel.user(at: 0).login, "testUser")
+            XCTAssertTrue(self.mockGitHubService.fetchUsersCalled)
+            XCTAssertEqual(self.mockGitHubService.lastPerPage, 20)
             expectation.fulfill()
         }
-
+        
         viewModel.fetchUsers()
         wait(for: [expectation], timeout: 1.0)
     }
-
+    
     func testFetchUsersFailure() {
+        // Given
         let expectation = XCTestExpectation(description: "Fetch users failure")
-        let mockError = NSError(domain: "", code: -1, userInfo: nil)
-        mockService.mockError = mockError
-
+        let mockError = NSError(domain: "TestError", code: -1, userInfo: nil)
+        mockGitHubService.mockError = mockError
+        
+        // When
         viewModel.onError = { message in
+            // Then
             XCTAssertFalse(message.isEmpty)
-            XCTAssertTrue(self.mockService.fetchUsersCalled)
+            XCTAssertTrue(self.mockGitHubService.fetchUsersCalled)
             expectation.fulfill()
         }
-
+        
+        viewModel.fetchUsers()
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    // MARK: - Cache Tests
+    
+    func testInitialLoadWithCachedUsers() {
+        // Given
+        let mockUser = GitHubUser(id: 1, login: "testUser", avatarUrl: URL(string: "https://test.com/avatar.jpg")!, htmlUrl: URL(string: "https://test.com/user")!)
+        let cachedUser = CachedUser(context: testCoreDataStack.context)
+        cachedUser.id = Int64(mockUser.id)
+        cachedUser.login = mockUser.login
+        cachedUser.avatarUrl = mockUser.avatarUrl.absoluteString
+        cachedUser.htmlUrl = mockUser.htmlUrl.absoluteString
+        try? testCoreDataStack.context.save()
+        
+        // When
+        let expectation = XCTestExpectation(description: "Initial load with cached users")
+        viewModel.onUsersUpdated = {
+            // Then
+            XCTAssertEqual(self.viewModel.numberOfUsers, 1)
+            XCTAssertEqual(self.viewModel.user(at: 0).login, "testUser")
+            expectation.fulfill()
+        }
+        
+        // The viewModel automatically loads cached users during initialization
+        wait(for: [expectation], timeout: 1.0)
+    }
+    
+    func testCacheUsers() {
+        // Given
+        let mockUsers = [
+            GitHubUser(id: 1, login: "testUser1", avatarUrl: URL(string: "https://test.com/avatar1.jpg")!, htmlUrl: URL(string: "https://test.com/user1")!),
+            GitHubUser(id: 2, login: "testUser2", avatarUrl: URL(string: "https://test.com/avatar2.jpg")!, htmlUrl: URL(string: "https://test.com/user2")!)
+        ]
+        mockGitHubService.mockUsers = mockUsers
+        
+        // When
+        let expectation = XCTestExpectation(description: "Cache users")
+        viewModel.onUsersUpdated = {
+            // Then
+            let fetchRequest: NSFetchRequest<CachedUser> = CachedUser.fetchRequest()
+            let cachedUsers = try? self.testCoreDataStack.context.fetch(fetchRequest)
+            
+            XCTAssertEqual(cachedUsers?.count, 2)
+            XCTAssertEqual(cachedUsers?.first?.login, "testUser1")
+            XCTAssertEqual(cachedUsers?.last?.login, "testUser2")
+            expectation.fulfill()
+        }
+        
         viewModel.fetchUsers()
         wait(for: [expectation], timeout: 1.0)
     }

@@ -11,7 +11,7 @@ import Foundation
 /// ViewModel for managing the user list
 class UserListViewModel {
     private let service: GitHubServiceProtocol
-    private let coreDataStack: CoreDataStack
+    private let coreDataStack: CoreDataStackProtocol
     private var users: [GitHubUser] = []
     private var isFetching = false
     private var lastId: Int = 0
@@ -20,7 +20,7 @@ class UserListViewModel {
     var onUsersUpdated: (() -> Void)?
     var onError: ((String) -> Void)?
 
-    init(service: GitHubServiceProtocol = GitHubService(), coreDataStack: CoreDataStack = .shared) {
+    init(service: GitHubServiceProtocol = GitHubService(), coreDataStack: CoreDataStackProtocol = CoreDataStack.shared) {
         self.service = service
         self.coreDataStack = coreDataStack
         loadCachedUsers()
