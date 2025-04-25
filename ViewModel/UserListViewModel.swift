@@ -7,6 +7,7 @@
 
 
 import Foundation
+import CoreData
 
 /// ViewModel for managing the user list
 class UserListViewModel {
@@ -55,8 +56,22 @@ class UserListViewModel {
     }
 
     private func loadCachedUsers() {
+        let fetchRequest: NSFetchRequest<CachedUser> = CachedUser.fetchRequest()
         do {
-            users = CachedUser.fetchAll(in: coreDataStack.context)
+            let cachedUsers = try coreDataStack.context.fetch(fetchRequest)
+            users = cachedUsers.compactMap { cachedUser -> GitHubUser? in
+                guard let login = cachedUser.login,
+                      let avatarUrlString = cachedUser.avatarUrl,
+                      let htmlUrlString = cachedUser.htmlUrl,
+                      let avatarUrl = URL(string: avatarUrlString),
+                      let htmlUrl = URL(string: htmlUrlString) else {
+                    return nil
+                }
+                return GitHubUser(id: Int(cachedUser.id),
+                                login: login,
+                                avatarUrl: avatarUrl,
+                                htmlUrl: htmlUrl)
+            }
             if !users.isEmpty {
                 lastId = users.last?.id ?? 0
                 onUsersUpdated?()
@@ -65,7 +80,6 @@ class UserListViewModel {
             print("Failed to load cached users: \(error)")
             onError?("Failed to load cached users")
         }
-        fetchUsers() // Fetch fresh data in background
     }
 
     private func cacheUsers(_ users: [GitHubUser]) {

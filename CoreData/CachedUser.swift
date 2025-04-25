@@ -11,9 +11,9 @@ import CoreData
 @objc(CachedUser)
 public class CachedUser: NSManagedObject {
     @NSManaged public var id: Int64
-    @NSManaged public var login: String
-    @NSManaged public var avatarUrl: String
-    @NSManaged public var htmlUrl: String
+    @NSManaged public var login: String?
+    @NSManaged public var avatarUrl: String?
+    @NSManaged public var htmlUrl: String?
     
     // MARK: - CoreData
     
@@ -41,10 +41,19 @@ public class CachedUser: NSManagedObject {
         let request = CachedUser.fetchRequest()
         do {
             let cachedUsers = try context.fetch(request)
-            return cachedUsers.map { GitHubUser(id: Int($0.id), 
-                                              login: $0.login ?? "",
-                                              avatarUrl: URL(string: $0.avatarUrl ?? "")!,
-                                              htmlUrl: URL(string: $0.htmlUrl ?? "")!) }
+            return cachedUsers.compactMap { cachedUser -> GitHubUser? in
+                guard let login = cachedUser.login,
+                      let avatarUrlString = cachedUser.avatarUrl,
+                      let htmlUrlString = cachedUser.htmlUrl,
+                      let avatarUrl = URL(string: avatarUrlString),
+                      let htmlUrl = URL(string: htmlUrlString) else {
+                    return nil
+                }
+                return GitHubUser(id: Int(cachedUser.id),
+                                login: login,
+                                avatarUrl: avatarUrl,
+                                htmlUrl: htmlUrl)
+            }
         } catch {
             print("Failed to fetch cached users: \(error)")
             return []
