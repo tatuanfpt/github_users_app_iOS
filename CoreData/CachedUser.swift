@@ -5,21 +5,29 @@
 //  Created by TuanTa on 24/4/25.
 //
 
-
 import Foundation
 import CoreData
 
 @objc(CachedUser)
 public class CachedUser: NSManagedObject {
-    
     @NSManaged public var id: Int64
     @NSManaged public var login: String
     @NSManaged public var avatarUrl: String
     @NSManaged public var htmlUrl: String
     
+    // MARK: - CoreData
+    
     @nonobjc public class func fetchRequest() -> NSFetchRequest<CachedUser> {
         return NSFetchRequest<CachedUser>(entityName: "CachedUser")
     }
+    
+    // MARK: - Initialization
+    
+    public override init(entity: NSEntityDescription, insertInto context: NSManagedObjectContext?) {
+        super.init(entity: entity, insertInto: context)
+    }
+    
+    // MARK: - Public Methods
     
     static func create(from user: GitHubUser, in context: NSManagedObjectContext) {
         let cachedUser = CachedUser(context: context)

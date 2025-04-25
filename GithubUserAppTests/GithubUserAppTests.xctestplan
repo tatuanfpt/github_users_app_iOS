@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "74FD01CC-0E2F-4CF1-98D0-737BF62F87F7",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:GithubUserApp.xcodeproj",
+        "identifier" : "26C0C66B2DBA2493004856E1",
+        "name" : "GithubUserAppTests"
+      }
+    }
+  ],
+  "version" : 1
+}
